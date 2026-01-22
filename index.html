@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MITRA USAHA GROUP (MUG)</title>
+    <link rel="icon" href="icon.png">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700&display=swap"
+        rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Firebase SDK (Modular) loaded in app.js -->
+    <!-- FontAwesome for Icons -->
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Premium Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <div class="logo-circle">
+                    <span class="logo-text">MUG</span>
+                </div>
+                <div class="loading-spinner"></div>
+            </div>
+            <div class="loading-text">
+                <h3>Mitra Usaha Group</h3>
+                <p>Memuat data...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar / Navigation -->
+    <nav class="sidebar">
+        <div class="brand">
+            <h1>MUG</h1>
+            <p>Mitra Usaha Group</p>
+        </div>
+        <ul class="nav-links">
+            <li class="active" data-target="dashboard">
+                <i class="fas fa-home"></i> <span>Dashboard</span>
+            </li>
+            <li data-target="transaksi">
+                <i class="fas fa-shopping-cart"></i> <span>Penjualan</span>
+            </li>
+            <li data-target="kulak">
+                <i class="fas fa-truck-loading"></i> <span>Kulak / Stok</span>
+            </li>
+            <li data-target="piutang">
+                <i class="fas fa-file-invoice-dollar"></i> <span>Rekap Piutang</span>
+            </li>
+            <li data-target="keuangan">
+                <i class="fas fa-wallet"></i> <span>Keuangan</span>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="top-bar">
+            <!-- Mobile Menu Btn removed in favor of Bottom Nav approach, but kept title -->
+            <h2 id="page-title">Dashboard</h2>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div id="firebase-status" class="status-indicator offline" title="Firebase Status">
+                    <i class="fas fa-wifi"></i>
+                </div>
+                <button id="theme-toggle" aria-label="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" data-target="dashboard">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </div>
+            <div class="nav-item" data-target="transaksi">
+                <i class="fas fa-exchange-alt"></i> <!-- Changed icon to represent generic transaction -->
+                <span>Transaksi</span>
+            </div>
+            <div class="nav-item" data-target="kulak">
+                <i class="fas fa-box-open"></i>
+                <span>Stok</span>
+            </div>
+            <div class="nav-item" data-target="piutang">
+                <i class="fas fa-book"></i>
+                <span>Hutang</span>
+            </div>
+            <div class="nav-item" data-target="keuangan">
+                <i class="fas fa-wallet"></i>
+                <span>Keuangan</span>
+            </div>
+        </nav>
+
+        <!-- Views Container -->
+        <div id="app-container">
+            <!-- Dashboard View -->
+            <section id="view-dashboard" class="view active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="icon-bg blue"><i class="fas fa-shopping-bag"></i></div>
+                        <div class="stat-info">
+                            <h3>Total Transaksi</h3>
+                            <p id="dash-total-transaksi">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon-bg green"><i class="fas fa-money-bill-wave"></i></div>
+                        <div class="stat-info">
+                            <h3>Total Omzet</h3>
+                            <p id="dash-omzet">Rp 0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon-bg yellow"><i class="fas fa-hand-holding-usd"></i></div>
+                        <div class="stat-info">
+                            <h3>Total Piutang</h3>
+                            <p id="dash-piutang">Rp 0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon-bg purple"><i class="fas fa-wallet"></i></div>
+                        <div class="stat-info">
+                            <h3>Saldo Kas</h3>
+                            <p id="dash-saldo">Rp 0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                            <h3>Tren Penjualan</h3>
+                            <div style="display: flex; gap: 8px;">
+                                <select id="trend-year" class="chart-filter">
+                                    <!-- Years populated by JS -->
+                                </select>
+                                <select id="trend-month" class="chart-filter">
+                                    <option value="all">Semua Bulan</option>
+                                    <option value="1">Januari</option>
+                                    <option value="2">Februari</option>
+                                    <option value="3">Maret</option>
+                                    <option value="4">April</option>
+                                    <option value="5">Mei</option>
+                                    <option value="6">Juni</option>
+                                    <option value="7">Juli</option>
+                                    <option value="8">Agustus</option>
+                                    <option value="9">September</option>
+                                    <option value="10">Oktober</option>
+                                    <option value="11">November</option>
+                                    <option value="12">Desember</option>
+                                </select>
+                            </div>
+                        </div>
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Penjualan per Jenis Barang</h3>
+                        <canvas id="itemsChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transaksi View -->
+            <section id="view-transaksi" class="view">
+                <div class="action-bar">
+                    <button class="btn-primary" onclick="showModal('modal-transaksi')"><i class="fas fa-plus"></i>
+                        Transaksi Baru</button>
+                    <input type="text" id="search-transaksi" placeholder="Cari pembeli..." class="search-input"
+                        oninput="renderTransactionList()">
+                </div>
+                <div class="list-container" id="list-transaksi">
+                    <!-- Transaksi Items will be here -->
+                </div>
+            </section>
+
+            <!-- Kulak / Stok View -->
+            <section id="view-kulak" class="view">
+                <div class="action-bar">
+                    <button class="btn-primary" onclick="showModal('modal-kulak')"><i class="fas fa-plus"></i> Kulak
+                        Baru</button>
+                    <input type="text" id="search-stok" placeholder="Cari barang..." class="search-input"
+                        oninput="renderStockTable(); renderKulakList()">
+                </div>
+
+                <!-- Inventory Summary -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3>Stok Barang Saat Ini</h3>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Nama Barang</th>
+                                    <th>Total Stok</th>
+                                    <th>Satuan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-stok">
+                                <!-- Inventory Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom:10px;">Riwayat Kulak</h3>
+                <div class="list-container" id="list-kulak">
+                    <!-- Kulak Items History -->
+                </div>
+            </section>
+
+            <!-- Piutang & Hutang View -->
+            <section id="view-piutang" class="view">
+                <!-- Summary Header -->
+                <div class="finance-summary" style="margin-bottom: 24px;">
+                    <div class="finance-card in">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <h4 style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 4px;">Total
+                                    Piutang</h4>
+                                <span id="summary-piutang"
+                                    style="font-size: 1.4rem; font-weight: 800; color: var(--success);">Rp 0</span>
+                                <p style="font-size: 0.75rem; margin-top: 4px; opacity: 0.8;">Tagihan ke Pelanggan</p>
+                            </div>
+                            <div
+                                style="background: rgba(16, 185, 129, 0.1); padding: 10px; border-radius: 12px; color: var(--success);">
+                                <i class="fas fa-hand-holding-usd fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="finance-card out">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <h4 style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 4px;">Total
+                                    Hutang
+                                </h4>
+                                <span id="summary-utang"
+                                    style="font-size: 1.4rem; font-weight: 800; color: var(--danger);">Rp 0</span>
+                                <p style="font-size: 0.75rem; margin-top: 4px; opacity: 0.8;">Tunggakan ke Supplier</p>
+                            </div>
+                            <div
+                                style="background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 12px; color: var(--danger);">
+                                <i class="fas fa-file-invoice-dollar fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Switcher -->
+                <div
+                    style="background: var(--input-bg); padding: 4px; border-radius: 12px; display: flex; margin-bottom: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                    <button class="debt-tab active" data-target="piutang-list" onclick="switchDebtTab(this)"
+                        style="flex: 1; padding: 10px; border: none; border-radius: 10px; background: transparent; color: var(--text-muted); font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                        Piutang (Kita Nagih)
+                    </button>
+                    <button class="debt-tab" data-target="utang-list" onclick="switchDebtTab(this)"
+                        style="flex: 1; padding: 10px; border: none; border-radius: 10px; background: transparent; color: var(--text-muted); font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                        Hutang (Tagihan Supplier)
+                    </button>
+                </div>
+
+                <!-- Search for Debts -->
+                <div class="action-bar" style="margin-bottom: 20px;">
+                    <input type="text" id="search-debt" placeholder="Cari nama, barang, atau catatan..."
+                        class="search-input" oninput="renderPiutang()">
+                </div>
+
+                <div id="piutang-list" class="debt-content active">
+                    <div id="list-piutang" class="list-container">
+                        <!-- Card Piutang here -->
+                    </div>
+                </div>
+
+                <div id="utang-list" class="debt-content" style="display: none;">
+                    <div id="list-utang" class="list-container">
+                        <!-- Card Utang here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Keuangan View -->
+            <section id="view-keuangan" class="view">
+                <div class="action-bar" style="margin-bottom: 20px;">
+                    <button class="btn-primary" onclick="showModal('modal-finance')">
+                        <i class="fas fa-plus"></i> Transaksi Keuangan
+                    </button>
+                    <input type="text" id="search-keuangan" placeholder="Cari kategori/entitas..." class="search-input"
+                        oninput="renderKeuangan()">
+                </div>
+                <div class="finance-summary">
+                    <div class="finance-card in">
+                        <h4>Uang Masuk</h4>
+                        <span id="fin-in">Rp 0</span>
+                    </div>
+                    <div class="finance-card out">
+                        <h4>Uang Keluar</h4>
+                        <span id="fin-out">Rp 0</span>
+                    </div>
+                    <div class="finance-card bal">
+                        <h4>Saldo Akhir</h4>
+                        <span id="fin-bal">Rp 0</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h3>Riwayat Arus Kas</h3>
+                    <div class="list-container" id="list-keuangan">
+                        <!-- History -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal Transaksi (Jual) -->
+    <div id="modal-transaksi" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Tambah Penjualan</h3>
+                <span class="close-modal" onclick="closeModal('modal-transaksi')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="form-transaksi">
+                    <div class="form-group">
+                        <label>Tanggal & Jam</label>
+                        <input type="datetime-local" id="trx-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Pembeli</label>
+                        <input type="text" id="trx-customer" required placeholder="Nama Pembeli">
+                    </div>
+
+                    <div class="items-section">
+                        <h4>Daftar Barang</h4>
+                        <div id="trx-items-container"></div>
+                        <button type="button" class="btn-secondary btn-sm" onclick="addTransactionItemRow('trx')">+
+                            Tambah Barang</button>
+                    </div>
+
+                    <div class="summary-section">
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span id="trx-subtotal-display">Rp 0</span>
+                        </div>
+
+                        <div class="summary-row"
+                            style="font-size: 1.1em; border-top: 1px dashed #ccc; padding-top: 5px;">
+                            <span>Total Pembayaran:</span>
+                            <span id="trx-total-display">Rp 0</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Bayar (Rp)</label>
+                            <input type="number" id="trx-pay" placeholder="0" min="0">
+                        </div>
+                        <div class="summary-row">
+                            <span>Sisa Hutang:</span>
+                            <span id="trx-debt-display" class="text-red">Rp 0</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Catatan</label>
+                            <textarea id="trx-note" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary btn-block">Simpan Transaksi</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Kulak (Beli) -->
+    <div id="modal-kulak" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Tambah Stok (Kulak)</h3>
+                <span class="close-modal" onclick="closeModal('modal-kulak')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="form-kulak">
+                    <div class="form-group">
+                        <label>Tanggal & Jam</label>
+                        <input type="datetime-local" id="kulak-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Supplier</label>
+                        <input type="text" id="kulak-supplier" required placeholder="Nama Supplier">
+                    </div>
+
+                    <div class="items-section">
+                        <h4>Daftar Barang</h4>
+                        <div id="kulak-items-container"></div>
+                        <button type="button" class="btn-secondary btn-sm" onclick="addTransactionItemRow('kulak')">+
+                            Tambah Barang</button>
+                    </div>
+
+                    <div class="summary-section">
+                        <div class="summary-row">
+                            <span>Total Belanja:</span>
+                            <span id="kulak-total-display">Rp 0</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Bayar (Rp)</label>
+                            <input type="number" id="kulak-pay" placeholder="0" min="0"
+                                oninput="calculateTotal('kulak')">
+                        </div>
+                        <div class="summary-row">
+                            <span>Sisa Hutang:</span>
+                            <span id="kulak-debt-display" class="text-red">Rp 0</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Catatan</label>
+                            <textarea id="kulak-note" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary btn-block">Simpan Pembelian</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Modal Finance (Manual Entry) -->
+    <div id="modal-finance" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Transaksi Keuangan</h3>
+                <span class="close-modal" onclick="closeModal('modal-finance')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="form-finance">
+                    <div class="form-group">
+                        <label>Tanggal</label>
+                        <input type="datetime-local" id="fin-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Jenis Transaksi</label>
+                        <select id="fin-type" onchange="handleFinTypeChange()" required>
+                            <option value="IN">Uang Masuk (Lain-lain)</option>
+                            <option value="OUT">Uang Keluar (Operasional/Hutang/Dll)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pilih Kategori / Jenis Transaksi</label>
+                        <select id="fin-category-select" onchange="toggleEntitySelect()" required>
+                            <option value="">-- Pilih Kategori --</option>
+                            <option value="Piutang Terbayar">Piutang Terbayar (Cicilan Pelanggan)</option>
+                            <option value="Modal Masuk">Modal Masuk</option>
+                            <option value="Lain-lain">Lain-lain (Tulis Manual)</option>
+                        </select>
+                    </div>
+                    <div id="manual-category-container" class="form-group" style="display: none;">
+                        <label>Keterangan Manual</label>
+                        <input type="text" id="fin-category-manual" placeholder="Tulis keterangan pengeluaran...">
+                    </div>
+                    <div id="entity-select-container" class="form-group" style="display: none;">
+                        <label id="entity-select-label">Pilih Supplier/Pelanggan</label>
+                        <select id="fin-entity-select">
+                            <option value="">-- Pilih --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nominal (Rp)</label>
+                        <input type="number" id="fin-amount" placeholder="0" required min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Catatan Tambahan</label>
+                        <textarea id="fin-note" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary btn-block">Simpan Keuangan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>
